@@ -9,3 +9,52 @@ create api keys-->copy api keys
 
 4. create gemini client
 =====================================
+memory-agent
+#######################################
+#interactive Agent
+memory = []
+
+prompt_template = """
+You are a helpful AI Assistant.
+
+Previous Conversation:
+{history}
+
+Current User Question:
+{question}
+
+Answer:
+"""
+
+while True:
+
+    question = input("You: ")
+
+    if question.lower() == "exit":
+        print("Chat Ended.")
+        break
+
+    # Convert memory to text
+    history = "\n".join(memory)
+
+    # Build prompt
+    prompt = prompt_template.format(
+        history=history,
+        question=question
+    )
+
+    # Call Gemini
+    response = client.models.generate_content(
+        model="gemini-3.5-flash",
+        contents=prompt
+    )
+
+    answer = response.text
+
+    # Print answer
+    print("\nAgent:", answer)
+    print("-"*70)
+
+    # Save conversation
+    memory.append(f"User: {question}")
+    memory.append(f"Assistant: {answer}")
