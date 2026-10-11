@@ -1,0 +1,315 @@
+{
+  "name": "Multi-Agent Orchestrator (Web Search + Coding) webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput }}",
+        "options": {
+          "systemMessage": "You are an orchestrator. You never answer questions yourself. Your only job is to decide which specialist agent should handle the user's request, call it, and return its answer to the user.\n\nAvailable agents:\n1. Web_Search_Agent - use for anything needing current, real-world or factual information: news, recent events, prices, people, companies, product info, documentation lookups, 'what is the latest...', 'search for...'.\n2. Coding_Agent - use for writing, explaining, reviewing, debugging, refactoring or converting code, algorithms, SQL, regex, shell commands, and technical/programming questions that don't need live web data.\n\nRules:\n- Pick exactly ONE agent for most requests.\n- If a request needs both (e.g. 'find the latest version of library X and write code using it'), call Web_Search_Agent first, then pass its findings to Coding_Agent.\n- Pass the user's full request to the agent, including any relevant context from earlier in the conversation.\n- Return the agent's answer to the user as-is. Do not add commentary about which agent you used unless asked.\n- For simple greetings or small talk, reply briefly yourself without calling an agent."
+        }
+      },
+      "id": "6c38e0ea-1ead-4029-bac5-67af7d69079d",
+      "name": "Orchestrator Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.chatInput }}",
+        "contextWindowLength": 10
+      },
+      "id": "cc5b5dd2-006d-418b-bce9-1ecd143529de",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Web search specialist. Call this for any question that needs up-to-date or factual information from the internet: news, current events, prices, people, companies, product details, documentation. Send the full user request as the prompt.",
+        "text": "={{ $json.body.chatInput }}",
+        "options": {
+          "systemMessage": "You are a web research agent. Use the Brave_Web_Search tool for general queries and Brave_News_Search for recent news or current events. Run more than one search if the first results are thin. Write a clear, concise answer based only on what the search results say, and list the source URLs you used at the end. If the results don't answer the question, say so plainly instead of guessing."
+        }
+      },
+      "id": "f1e209f7-9174-4562-8f18-27f7fd534171",
+      "name": "Web Search Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Coding specialist. Call this for writing, explaining, debugging, reviewing, refactoring or converting code, and for programming, SQL, regex or shell questions. Send the full user request (and any code they shared) as the prompt.",
+        "text": "={{ $json.body.chatInput }}",
+        "options": {
+          "systemMessage": "You are an expert software engineer. Write correct, clean, well-structured code with brief comments where helpful. Always put code in fenced markdown blocks with the language tag. When debugging, explain the root cause first, then give the fix. When requirements are ambiguous, state your assumptions. Prefer the language the user mentions; if none, choose the most suitable one and say why in one line."
+        }
+      },
+      "id": "7e088764-f7c4-46aa-87ec-c509cb0c402a",
+      "name": "Coding Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        192,
+        240
+      ],
+      "id": "ed5fdca7-d357-4565-b605-f8c05da05ebf",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "kePdwmxYxOaC2ZRP",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "={{ $json.chatInput }}",
+        "additionalParameters": {}
+      },
+      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        656
+      ],
+      "id": "dbe1f88f-a227-4412-950d-c7e001eaebf9",
+      "name": "Brave Search1",
+      "credentials": {
+        "braveSearchApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "9c211989-d75f-466c-a1c0-15f123045e52",
+      "name": "Coding llm",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        640
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "9fead9ff-daae-4185-a9d4-c8ba02a74d5f",
+      "name": "websearch llm",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        656
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dae6f30b-26a2-4c14-b153-ba3384046593",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        80,
+        32
+      ],
+      "id": "6c8ffdd4-8cae-4d3d-baf2-927114441f87",
+      "name": "Webhook",
+      "webhookId": "dae6f30b-26a2-4c14-b153-ba3384046593"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"reply\" : $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        848,
+        0
+      ],
+      "id": "a69b3330-2a61-48b0-9985-e2ecb233c187",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Search Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coding Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brave Search1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Web Search Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coding llm": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Coding Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "websearch llm": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Web Search Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Orchestrator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrator Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "09cf4ede-69cb-4244-9f7e-a82ba0dd5761",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "905249e3f823802a340b1d1088d3eb79861dd3f12075a3839f0e84909148853c"
+  },
+  "nodeGroups": [],
+  "id": "XhUUPDFyOTpC9zTK",
+  "tags": []
+}

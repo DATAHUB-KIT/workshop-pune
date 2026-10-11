@@ -1,0 +1,200 @@
+{
+  "name": "MCP Server (Web Search + Coding)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "multi-agent-mcp"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -64
+      ],
+      "id": "66d60a1a-2c8b-4e28-8096-d8b87a0a5bb5",
+      "name": "MCP Server Trigger",
+      "webhookId": "4f7e2a10-9b3c-4d5e-8f60-71a2b3c4d5e6"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Searches the web and returns a sourced answer. Use for news, current events, prices, people, companies, product details or documentation lookups. Pass the full question, with any needed context.",
+        "text": "={{ $fromAI('question', 'The full question to research, including any context needed', 'string') }}",
+        "options": {
+          "systemMessage": "You are a web research agent. Use the Brave Search tool to find information. Run more than one search if the first results are thin. Write a clear, concise answer based only on what the search results say, and list the source URLs you used at the end. If the results don't answer the question, say so plainly instead of guessing."
+        }
+      },
+      "id": "59680439-275d-42a0-9dfd-a0095fbda48f",
+      "name": "Web Search Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Expert coding assistant. Use for writing, explaining, debugging, reviewing, refactoring or converting code, and for SQL, regex or shell questions. Pass the full request, including any code and error messages.",
+        "text": "={{ $fromAI('request', 'The full coding request, including any code, error messages and context', 'string') }}",
+        "options": {
+          "systemMessage": "You are an expert software engineer. Write correct, clean, well-structured code with brief comments where helpful. Always put code in fenced markdown blocks with the language tag. When debugging, explain the root cause first, then give the fix. When requirements are ambiguous, state your assumptions. Prefer the language the user mentions; if none, choose the most suitable one and say why in one line."
+        }
+      },
+      "id": "3c4721b9-76ac-45a3-95c6-1ee42d0da7bf",
+      "name": "Coding Agent",
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "91ba154f-543b-43b1-965a-01e0c348724d",
+      "name": "websearch llm",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        400
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "query": "={{ $fromAI('query', 'A short, specific web search query', 'string') }}",
+        "additionalParameters": {}
+      },
+      "type": "@brave/n8n-nodes-brave-search.braveSearchTool",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        416
+      ],
+      "id": "32fc5d1c-3d64-4d21-bf75-437a92fd9e2d",
+      "name": "Brave Search",
+      "credentials": {
+        "braveSearchApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "d61197f3-36ca-4cfc-863c-35611b0375fb",
+      "name": "Coding llm",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        432
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Web Search Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coding Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "websearch llm": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Web Search Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Brave Search": {
+      "ai_tool": [
+        [
+          {
+            "node": "Web Search Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coding llm": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Coding Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "81ed5551-6f6b-4f51-9bbd-79c679081071",
+  "meta": {
+    "instanceId": "905249e3f823802a340b1d1088d3eb79861dd3f12075a3839f0e84909148853c"
+  },
+  "nodeGroups": [],
+  "id": "OHHetRCvDR8pM7Gv",
+  "tags": []
+}
