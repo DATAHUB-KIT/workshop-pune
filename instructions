@@ -1,1 +1,11 @@
+1.CREATE GEMINI API KEYS
+login google ai studio-->gemini projct-->
+create api keys-->copy api keys
 
+2. google colab secrets
+   vs code  .env
+
+3. get keys jupyter note book
+
+4. create gemini client
+=====================================
